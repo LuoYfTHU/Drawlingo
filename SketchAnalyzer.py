@@ -61,33 +61,35 @@ class SketchAnalyzerWorker(QThread):
             self.status.emit("Processing image...")
             image_data = base64.b64decode(self.image_base64)
             image = Image.open(BytesIO(image_data)).convert("RGB")
+
+            breakpoint()
             
             # Format input (Qwen2-VL uses conversation-style input)
             # Match official example format exactly
-            # messages = [
-            #     {"role": "system", "content": ""}, 
-            #     {
-            #         "role": "user",
-            #         "content": [
-            #             {"type": "image", "image": image},
-            #             {"type": "text", "text": self.prompt}
-            #         ]
-            #     }
-            # ]
-
             messages = [
-                {
-                    "role": "system",
-                    "content": "You are “Drawlingo”, a friendly art and language teacher for English-speaking children learning German.\n\nAlways speak to the child directly in a warm, simple way.\n\nFor EVERY answer, follow EXACTLY this 3-line structure:\n\n1) A short praise + English description of what the child drew, in English.\n2) On a single line: English noun, space, comma, space, then the German noun with a capital letter. Example: \"Tree, Baum.\"\n3) One short sentence in simple German that describes the drawing, talking to the child. Example: \"Du hast einen schönen Baum gemalt!\"\n\nRules:\n- Use ONLY English and German.\n- Do not explain grammar.\n- Do not translate the German sentence back to English.\n- No bullet points, no numbering in the output. Just three plain lines of text.\n- If there are several objects, pick ONE main object to teach."
-                },
+                {"role": "system", "content": "You are a kindergarten teacher. You are telling a story to a 3-year-old child. The story based on the image and the prompt."}, 
                 {
                     "role": "user",
                     "content": [
                         {"type": "image", "image": image},
-                        {"type": "text", "text": "Talk to the child following the 3-line structure."}
+                        {"type": "text", "text": self.prompt}
                     ]
                 }
             ]
+
+            # messages = [
+            #     {
+            #         "role": "system",
+            #         "content": "You are “Drawlingo”, a friendly art and language teacher for English-speaking children learning German.\n\nAlways speak to the child directly in a warm, simple way.\n\nFor EVERY answer, follow EXACTLY this 3-line structure:\n\n1) A short praise + English description of what the child drew, in English.\n2) On a single line: English noun, space, comma, space, then the German noun with a capital letter. Example: \"Tree, Baum.\"\n3) One short sentence in simple German that describes the drawing, talking to the child. Example: \"Du hast einen schönen Baum gemalt!\"\n\nRules:\n- Use ONLY English and German.\n- Do not explain grammar.\n- Do not translate the German sentence back to English.\n- No bullet points, no numbering in the output. Just three plain lines of text.\n- If there are several objects, pick ONE main object to teach."
+            #     },
+            #     {
+            #         "role": "user",
+            #         "content": [
+            #             {"type": "image", "image": image},
+            #             {"type": "text", "text": "Talk to the child following the 3-line structure."}
+            #         ]
+            #     }
+            # ]
 
             
             # Prepare inputs - following official example
@@ -115,7 +117,10 @@ class SketchAnalyzerWorker(QThread):
             
             # Decode - match official example exactly
             result = processor.batch_decode(output, skip_special_tokens=True)[0]
+            breakpoint()
+            
             story = result.split("ASSISTANT:")[-1].strip()
+            breakpoint()
             
             # Fallback if ASSISTANT: marker not found
             if not story:
@@ -169,6 +174,8 @@ class SketchAnalyzer(QObject):
         else:
             prompt = self.generatePrompt()
 
+        breakpoint()
+
         
         # Cancel any existing worker
         if self.worker and self.worker.isRunning():
@@ -198,8 +205,7 @@ class SketchAnalyzer(QObject):
     def generatePrompt(self):
         """Generate the prompt for story generation."""
         return (
-            "Describe the sketch in easy English in 3 short sentences."
-            "Then translate the English sentences to German."
+            "Tell a story based on the sketch in easy English. The story is for a 3-year-old child."
             "Do not add any other response."
         )
         # return (
