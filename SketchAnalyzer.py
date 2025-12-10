@@ -99,11 +99,14 @@ class SketchAnalyzerWorker(QThread):
             )
             image_inputs, _ = process_vision_info(messages)
             
+            # Determine device (CUDA if available, else CPU)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            
             inputs = processor(
                 text=[text],
                 images=image_inputs,
                 return_tensors="pt"
-            ).to("cpu")  # or "cuda" if you have GPU - match official example
+            ).to(device)
             
             # Generate
             self.status.emit("Generating story...")
@@ -159,7 +162,6 @@ class SketchAnalyzer(QObject):
         parent_widget = self.parent()
         if parent_widget and hasattr(parent_widget, "getCustomPrompt"):
             user_prompt = parent_widget.getCustomPrompt()
-            breakpoint()
             if user_prompt and user_prompt.strip():
                 prompt = user_prompt.strip()
             else:
