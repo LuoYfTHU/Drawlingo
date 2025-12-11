@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QTextCursor, QColor
 from DrawingCanvas import DrawingCanvas
 from SketchAnalyzer import SketchAnalyzer
+from VocabularyAnalyzer import VocabularyAnalyzer
 
 try:
     import pyttsx3
@@ -36,6 +37,8 @@ class MainWindow(QMainWindow):
         self.m_penButton = None
         self.m_eraserButton = None
         self.m_toolButtonGroup = None
+        self.m_vocabButton = None
+        self.m_vocabAnalyzer = None
         
         self.setupUI()
         
@@ -44,6 +47,8 @@ class MainWindow(QMainWindow):
         self.m_analyzer.analysisComplete.connect(self.onAnalysisComplete)
         self.m_analyzer.analysisError.connect(self.onAnalysisError)
         self.m_analyzer.statusUpdate.connect(self.onStatusUpdate)
+        # Initialize vocabulary analyzer
+        self.m_vocabAnalyzer = VocabularyAnalyzer()
         
         self.setWindowTitle("Drawlingo - Sketch Language Learning")
         self.resize(1200, 700)
@@ -117,7 +122,7 @@ class MainWindow(QMainWindow):
         self.m_separatorLabel.setFixedWidth(2)
         self.m_separatorLabel.setStyleSheet("background-color: #cccccc;")
         
-        # Arrow button pointing from canvas to text area
+        # Arrow button pointing from canvas to text area (left arrow)
         self.m_analyzeButton = QPushButton("←", self)
         self.m_analyzeButton.setFixedSize(50, 50)
         self.m_analyzeButton.setStyleSheet(
@@ -140,9 +145,35 @@ class MainWindow(QMainWindow):
             "}"
         )
         self.m_analyzeButton.clicked.connect(self.onAnalyzeButtonClicked)
+
+        # Vocabulary analyzer button (right arrow, opposite direction)
+        self.m_vocabButton = QPushButton("→", self)
+        self.m_vocabButton.setFixedSize(50, 50)
+        self.m_vocabButton.setStyleSheet(
+            "QPushButton {"
+            "    font-size: 24px;"
+            "    font-weight: bold;"
+            "    background-color: #4CAF50;"
+            "    color: white;"
+            "    border: none;"
+            "    border-radius: 25px;"
+            "}"
+            "QPushButton:hover {"
+            "    background-color: #45a049;"
+            "}"
+            "QPushButton:pressed {"
+            "    background-color: #3d8b40;"
+            "}"
+            "QPushButton:disabled {"
+            "    background-color: #cccccc;"
+            "}"
+        )
+        self.m_vocabButton.clicked.connect(self.onVocabAnalyzeClicked)
         
         separatorLayout.addStretch()
         separatorLayout.addWidget(self.m_analyzeButton, 0, Qt.AlignmentFlag.AlignCenter)
+        separatorLayout.addSpacing(12)
+        separatorLayout.addWidget(self.m_vocabButton, 0, Qt.AlignmentFlag.AlignCenter)
         separatorLayout.addStretch()
         
         # Right side container (toolbar + canvas)
@@ -381,6 +412,10 @@ class MainWindow(QMainWindow):
         self.m_textArea.moveCursor(QTextCursor.MoveOperation.Start)
         QApplication.processEvents()  # Ensure UI updates immediately
 
+        # Append story for vocabulary tracking
+        if self.m_vocabAnalyzer:
+            self.m_vocabAnalyzer.add_story(story)
+
         self.speakText(story, "en")
         
         # # Extract English and German text and read them
@@ -507,6 +542,19 @@ class MainWindow(QMainWindow):
         currentText = self.m_textArea.toPlainText()
         if currentText.startswith("Analyzing") or currentText.startswith("Status:"):
             self.m_textArea.setPlainText("Status: " + status)
+
+    def onVocabAnalyzeClicked(self):
+        """Handle vocabulary analyzer button click."""
+        if not self.m_vocabAnalyzer:
+            QMessageBox.warning(self, "Vocabulary Analyzer", "Vocabulary analyzer is not available.")
+            return
+        vocab = self.m_vocabAnalyzer.learn_vocabulary()
+        display = f"[Vocabulary]\n{vocab}\n"
+        # Prepend vocabulary result to the text area for visibility
+        current = self.m_textArea.toPlainText()
+        new_text = display + "\n" + current if current else display
+        self.m_textArea.setPlainText(new_text.strip())
+        self.m_textArea.moveCursor(QTextCursor.MoveOperation.Start)
     
     def speakText(self, text: str, language: str):
         """Speak text using text-to-speech."""
