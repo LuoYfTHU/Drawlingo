@@ -61,8 +61,6 @@ class SketchAnalyzerWorker(QThread):
             self.status.emit("Processing image...")
             image_data = base64.b64decode(self.image_base64)
             image = Image.open(BytesIO(image_data)).convert("RGB")
-
-            breakpoint()
             
             # Format input (Qwen2-VL uses conversation-style input)
             # Match official example format exactly
@@ -118,7 +116,8 @@ class SketchAnalyzerWorker(QThread):
             # Decode - match official example exactly
             result = processor.batch_decode(output, skip_special_tokens=True)[0]
             
-            story = result.split("assistant\nA")[-1].strip()
+            story = result.split("assistant")[-1].strip()
+            breakpoint()
 
             #story = result.split("ASSISTANT:")[-1].strip()
             
@@ -173,8 +172,6 @@ class SketchAnalyzer(QObject):
                 prompt = self.generatePrompt()
         else:
             prompt = self.generatePrompt()
-
-        breakpoint()
 
         
         # Cancel any existing worker
