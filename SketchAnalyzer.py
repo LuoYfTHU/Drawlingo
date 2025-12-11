@@ -60,10 +60,7 @@ class SketchAnalyzerWorker(QThread):
             # Decode base64 image
             self.status.emit("Processing image...")
             image_data = base64.b64decode(self.image_base64)
-            image = Image.open(BytesIO(image_data)).convert("RGB")
-
-            breakpoint()
-            
+            image = Image.open(BytesIO(image_data)).convert("RGB")            
             # Format input (Qwen2-VL uses conversation-style input)
             # Match official example format exactly
             messages = [
@@ -117,10 +114,8 @@ class SketchAnalyzerWorker(QThread):
             
             # Decode - match official example exactly
             result = processor.batch_decode(output, skip_special_tokens=True)[0]
-            breakpoint()
             
-            story = result.split("ASSISTANT:")[-1].strip()
-            breakpoint()
+            story = result.split("assistant")[-1].strip()
             
             # Fallback if ASSISTANT: marker not found
             if not story:
@@ -205,7 +200,7 @@ class SketchAnalyzer(QObject):
     def generatePrompt(self):
         """Generate the prompt for story generation."""
         return (
-            "Tell a story based on the sketch in easy English. The story is for a 3-year-old child."
+            "Tell a story based on the sketch in easy English. The short story is for a 3-year-old child. The story should not be longer than 8 sentences."
             "Do not add any other response."
         )
         # return (
