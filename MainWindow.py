@@ -386,45 +386,6 @@ class MainWindow(QMainWindow):
         englishText = ""
         germanText = ""
         
-        # Strategy 1: Look for explicit "English:" and "German:" markers
-        parts = story.split("\n\n")
-        for part in parts:
-            if part.startswith("English:"):
-                englishText = part[8:].strip()
-            elif part.startswith("German:"):
-                germanText = part[7:].strip()
-        
-        # Strategy 2: If not found, try finding markers anywhere in text
-        if not englishText and not germanText:
-            engIdx = story.find("English:")
-            gerIdx = story.find("German:")
-            
-            if engIdx >= 0 and gerIdx > engIdx:
-                englishText = story[engIdx + 8:gerIdx].strip()
-                germanText = story[gerIdx + 7:].strip()
-        
-        # Strategy 3: Try splitting by common separators (paragraphs, double newlines)
-        if not englishText and not germanText:
-            paragraphs = [p.strip() for p in story.split("\n\n") if p.strip()]
-            if len(paragraphs) >= 2:
-                # Assume first paragraph(s) are English, last is German
-                # Simple heuristic: if we have 2+ paragraphs, split roughly in half
-                mid_point = len(paragraphs) // 2
-                englishText = "\n".join(paragraphs[:mid_point])
-                germanText = "\n".join(paragraphs[mid_point:])
-            elif len(paragraphs) == 1:
-                # Single paragraph - try to split by sentences or just read as English
-                sentences = [s.strip() for s in paragraphs[0].split('.') if s.strip()]
-                if len(sentences) >= 2:
-                    mid_point = len(sentences) // 2
-                    englishText = ". ".join(sentences[:mid_point]) + "."
-                    germanText = ". ".join(sentences[mid_point:]) + "."
-                else:
-                    englishText = paragraphs[0]
-        
-        # Strategy 4: Final fallback - read everything as English
-        if not englishText and not germanText:
-            englishText = story.strip()
         
         # Read English first, then German (text is already visible)
         if englishText:
