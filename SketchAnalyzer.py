@@ -117,10 +117,10 @@ class SketchAnalyzerWorker(QThread):
             
             # Decode - match official example exactly
             result = processor.batch_decode(output, skip_special_tokens=True)[0]
-            breakpoint()
             
-            story = result.split("ASSISTANT:")[-1].strip()
-            breakpoint()
+            story = result.split("assistant\nA")[-1].strip()
+
+            #story = result.split("ASSISTANT:")[-1].strip()
             
             # Fallback if ASSISTANT: marker not found
             if not story:
@@ -205,7 +205,7 @@ class SketchAnalyzer(QObject):
     def generatePrompt(self):
         """Generate the prompt for story generation."""
         return (
-            "Tell a story based on the sketch in easy English. The story is for a 3-year-old child."
+            "Imagine you are a professional children's storybook writer. You are writing a story based on the sketch."
             "Do not add any other response."
         )
         # return (
